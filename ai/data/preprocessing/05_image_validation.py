@@ -40,10 +40,8 @@ for folder in IMAGE_FOLDERS:
     if not folder.exists():
         continue
 
-    for file in folder.iterdir():
-
-        if file.suffix.lower() == ".png":
-            image_lookup[file.name] = file
+    for file in folder.rglob("*.png"):
+        image_lookup[file.name] = file
 
 print(f"Indexed Images : {len(image_lookup)}")
 
