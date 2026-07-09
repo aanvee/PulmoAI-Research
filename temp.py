@@ -1,5 +1,5 @@
-from ai.data.dataloader import PulmoDataset
-from ai.data.transforms import train_transform
+from ai.data.preprocessing.dataloader import PulmoDataset
+from ai.data.preprocessing.transforms import train_transform
 
 dataset = PulmoDataset(
     "ai/data/processed/training_dataset.csv",
