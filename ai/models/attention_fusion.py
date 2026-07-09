@@ -1,50 +1,94 @@
 import torch
 import torch.nn as nn
-from torchvision.models import (
-    densenet121,
-    DenseNet121_Weights
-)
 
 
-class ImageEncoder(nn.Module):
+class AttentionFusion(nn.Module):
     """
-    DenseNet121 based Image Encoder
+    Attention-Based Feature Fusion
 
-    Input:
-        (B, 3, 224, 224)
+    Inputs:
+        image_features    -> (B,1024)
+        metadata_features -> (B,128)
 
     Output:
-        (B, 1024)
+        fused_features -> (B,256)
     """
 
-    def __init__(self, pretrained=True):
+    def __init__(self):
 
-        super(ImageEncoder, self).__init__()
+        super().__init__()
 
-        if pretrained:
-            weights = DenseNet121_Weights.DEFAULT
-        else:
-            weights = None
+        # Reduce image features
+        self.image_projection = nn.Linear(
+            1024,
+            128
+        )
 
-        self.backbone = densenet121(weights=weights)
+        # Learn attention weights
+        self.attention = nn.Sequential(
 
-        # Remove classifier layer
-        self.backbone.classifier = nn.Identity()
+            nn.Linear(
+                256,
+                128
+            ),
 
-    def forward(self, x):
+            nn.ReLU(),
 
-        features = self.backbone(x)
+            nn.Linear(
+                128,
+                256
+            ),
 
-        return features
-#to be deleted later
-    if __name__ == "__main__":
+            nn.Sigmoid()
 
-        model = ImageEncoder(pretrained=True)
+        )
 
-        dummy = torch.randn(4, 3, 224, 224)
+    def forward(
+        self,
+        image_features,
+        metadata_features
+    ):
 
-        output = model(dummy)
+        image_features = self.image_projection(
+            image_features
+        )
 
-        print("=" * 50)
-        print("Input Shape :", dummy.shape)
-        print("Output Shape:", output.shape)
+        fused = torch.cat(
+            [
+                image_features,
+                metadata_features
+            ],
+            dim=1
+        )
+
+        weights = self.attention(
+            fused
+        )
+
+        fused = fused * weights
+
+        return fused
+
+if __name__ == "__main__":
+
+    model = AttentionFusion()
+
+    image = torch.randn(
+        4,
+        1024
+    )
+
+    metadata = torch.randn(
+        4,
+        128
+    )
+
+    output = model(
+        image,
+        metadata
+    )
+
+    print("=" * 50)
+    print("Image :", image.shape)
+    print("Metadata :", metadata.shape)
+    print("Output :", output.shape)

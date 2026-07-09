@@ -37,14 +37,16 @@ class ImageEncoder(nn.Module):
 
         return features
 #to be deleted later
-if __name__ == "__main__":
+###
+#if __name__ == "__main__":
 
-        model = ImageEncoder(pretrained=True)
+#        model = ImageEncoder(pretrained=True)
 
-        dummy = torch.randn(4, 3, 224, 224)
+#        dummy = torch.randn(4, 3, 224, 224)
 
-        output = model(dummy)
+#        output = model(dummy)
 
-        print("=" * 50)
-        print("Input Shape :", dummy.shape)
-        print("Output Shape:", output.shape)
+#        print("=" * 50)
+#       print("Input Shape :", dummy.shape)
+#        print("Output Shape:", output.shape)
+#
