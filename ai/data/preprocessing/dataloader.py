@@ -4,7 +4,7 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 
-from ai.data.transforms import (
+from ai.data.preprocessing.transforms import (
     train_transform,
     valid_transform
 )
