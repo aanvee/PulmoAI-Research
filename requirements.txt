@@ -3,6 +3,7 @@ numpy
 matplotlib
 seaborn
 opencv-python
- pillow 
- scikit-learn 
- tqdm
+pillow 
+scikit-learn 
+joblib
+tqdm
