@@ -4,7 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from ai.configs.config import IMAGE_FOLDERS
-
+from sklearn.model_selection import train_test_split
 # ==========================================================
 # Paths
 # ==========================================================
@@ -91,38 +91,87 @@ dataset = dataset.dropna(subset=["image_path"])
 
 print(f"Missing Images Removed : {missing}")
 
+
+
 # ==========================================================
-# Save Final Dataset
+# Load Official NIH Splits
 # ==========================================================
 
-output_file = os.path.join(
-    OUTPUT_DIR,
-    "training_dataset.csv"
+print("\nLoading Official Train/Test Lists...")
+
+train_list = pd.read_csv(
+    "D:/Datasets/NIH_ChestXray14/train_val_list.txt",
+    header=None,
+    names=["image_index"]
 )
 
-dataset.to_csv(
-    output_file,
+test_list = pd.read_csv(
+    "D:/Datasets/NIH_ChestXray14/test_list.txt",
+    header=None,
+    names=["image_index"]
+)
+
+# ==========================================================
+# Build Train/Test DataFrames
+# ==========================================================
+
+train_val_dataset = dataset.merge(
+    train_list,
+    on="image_index",
+    how="inner"
+)
+
+test_dataset = dataset.merge(
+    test_list,
+    on="image_index",
+    how="inner"
+)
+
+# ==========================================================
+# Train / Validation Split
+# ==========================================================
+
+train_dataset, validation_dataset = train_test_split(
+    train_val_dataset,
+    test_size=0.10,
+    random_state=42,
+    shuffle=True
+)
+
+# ==========================================================
+# Save Datasets
+# ==========================================================
+
+train_dataset.to_csv(
+    os.path.join(OUTPUT_DIR, "train_dataset.csv"),
     index=False
 )
 
-print(f"\nSaved : {output_file}")
+validation_dataset.to_csv(
+    os.path.join(OUTPUT_DIR, "validation_dataset.csv"),
+    index=False
+)
+
+test_dataset.to_csv(
+    os.path.join(OUTPUT_DIR, "test_dataset.csv"),
+    index=False
+)
 
 # ==========================================================
-# Dataset Summary
+# Summary
 # ==========================================================
 
 print("\n")
 print("=" * 60)
 
-print(f"Final Samples : {len(dataset)}")
-
-print(f"Total Columns : {len(dataset.columns)}")
-
-print("\nColumns:")
-
-for col in dataset.columns:
-    print(col)
+print("Dataset Split Summary")
 
 print("=" * 60)
 
-print("\nTraining Dataset Built Successfully.")
+print(f"Training Samples   : {len(train_dataset)}")
+print(f"Validation Samples : {len(validation_dataset)}")
+print(f"Test Samples       : {len(test_dataset)}")
+
+print("=" * 60)
+
+print("\nDatasets Saved Successfully.")

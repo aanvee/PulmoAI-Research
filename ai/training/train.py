@@ -5,7 +5,7 @@ from ai.data.preprocessing.dataloader import create_dataloaders
 from ai.models.multimodal_model import PulmoAIModel
 from ai.training.losses import MultiLabelLoss
 from ai.training.metrics import MetricsCalculator
-from ai.configs.config import TRAINING_DATASET
+from ai.configs.config import TRAIN_DATASET
 
 # ==========================================================
 # Configuration
@@ -30,7 +30,7 @@ print("=" * 60)
 # ==========================================================
 
 train_loader = create_dataloaders(
-    train_csv=TRAINING_DATASET,
+    train_csv=TRAIN_DATASET,
     batch_size=BATCH_SIZE,
     num_workers=0
 )
