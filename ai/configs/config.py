@@ -11,7 +11,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 # Change only this line on different machines
 # ==========================================================
 
-DATASET_ROOT = Path(r"D:\Datasets\NIH_ChestXray14")
+DATASET_ROOT = Path(r"D:\archive")
 
 # ==========================================================
 # Original NIH Files
