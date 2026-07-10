@@ -4,6 +4,7 @@ from pathlib import Path
 DATASET_ROOT = Path(r"D:\Datasets\NIH_ChestXray14")
 
 METADATA_FILE = DATASET_ROOT / "Data_Entry_2017.csv"
+TRAINING_DATASET = Path("ai/data/processed/training_dataset.csv")
 TRAIN_LIST = DATASET_ROOT / "train_val_list.txt"
 TEST_LIST = DATASET_ROOT / "test_list.txt"
 
