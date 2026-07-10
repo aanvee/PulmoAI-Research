@@ -32,7 +32,7 @@ print("=" * 60)
 train_loader = create_dataloaders(
     train_csv=TRAINING_DATASET,
     batch_size=BATCH_SIZE,
-    num_workers=4
+    num_workers=0
 )
 
 print("Training Samples :", len(train_loader.dataset))
