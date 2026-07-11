@@ -14,8 +14,11 @@ from ai.data.preprocessing.transforms import valid_transform
 DEVICE = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
 )
+from pathlib import Path
 
-CHECKPOINT = "ai/checkpoints/best_model.pth"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+CHECKPOINT = PROJECT_ROOT / "ai" / "checkpoints" / "best_model.pth"
 
 THRESHOLD = 0.5
 
@@ -42,7 +45,7 @@ DISEASES = [
     "Pneumothorax"
 ]
 
-
+"""
 # ==========================================================
 # Load Model
 # ==========================================================
@@ -65,7 +68,39 @@ model.load_state_dict(
 
 model.eval()
 
+"""
+# ==========================================================
+# Load Model
+# ==========================================================
 
+_model = None
+
+
+def get_model():
+
+    global _model
+
+    if _model is None:
+
+        if not CHECKPOINT.exists():
+            raise FileNotFoundError(
+                f"Checkpoint not found: {CHECKPOINT}"
+            )
+
+        _model = PulmoAIModel().to(DEVICE)
+
+        checkpoint = torch.load(
+            CHECKPOINT,
+            map_location=DEVICE
+        )
+
+        _model.load_state_dict(
+            checkpoint["model_state_dict"]
+        )
+
+        _model.eval()
+
+    return _model
 # ==========================================================
 # Prediction Function
 # ==========================================================
@@ -91,7 +126,7 @@ def predict(
     ).unsqueeze(0)
 
     metadata = metadata.to(DEVICE)
-
+    model = get_model()
     with torch.no_grad():
 
         outputs = model(
