@@ -67,12 +67,12 @@ class PulmoDataset(Dataset):
             image = self.transform(image)
 
         metadata = torch.tensor(
-            row[self.metadata_columns].values,
+            [float(x) for x in row[self.metadata_columns]],
             dtype=torch.float32
         )
 
         labels = torch.tensor(
-            row[self.label_columns].values,
+            [float(x) for x in row[self.label_columns]],
             dtype=torch.float32
         )
 
