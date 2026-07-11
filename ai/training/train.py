@@ -2,7 +2,7 @@ import os
 import time
 import random
 import numpy as np
-
+import pandas as pd
 import torch
 import torch.optim as optim
 
@@ -397,11 +397,11 @@ for epoch in range(start_epoch, EPOCHS):
             running_val_loss += loss.item()
 
             val_predictions.append(
-                outputs.cpu()
+                outputs.detach().cpu()
             )
 
             val_targets.append(
-                labels.cpu()
+                labels.detach().cpu()
             )
 
             validation_progress.set_postfix(
@@ -534,7 +534,6 @@ for epoch in range(start_epoch, EPOCHS):
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
         "best_val_loss": best_val_loss,
-        "best_epoch": best_epoch,
     },
     LAST_CHECKPOINT
     )
@@ -569,13 +568,12 @@ os.makedirs(
     exist_ok=True
 )
 
-import pandas as pd
-
 history_df = pd.DataFrame(history)
 
 history_df.to_csv(
     "ai/results/history.csv",
     index=False
 )
+print("Training History Saved : ai/results/history.csv")
 print("=" * 70)
 
