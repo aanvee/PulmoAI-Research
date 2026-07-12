@@ -153,3 +153,31 @@ def predict(
         }
 
     return results
+# ==========================================================
+# Test Prediction
+# ==========================================================
+
+if __name__ == "__main__":
+
+    IMAGE_PATH = r"D:\archive\images_001\images\00000003_000.png"
+
+    metadata = [
+    0,                  # Female
+    0,                  # AP View
+    0.1937046004842615  # Normalized age
+]
+
+    results = predict(
+        IMAGE_PATH,
+        metadata
+    )
+
+    print("\nPrediction Results\n")
+
+    for disease, info in results.items():
+
+        print(
+            f"{disease:20s}"
+            f" Probability: {info['probability']:.4f}"
+            f" Prediction: {info['prediction']}"
+        )
