@@ -27,22 +27,13 @@ class GradCAM:
 
     def _register_hooks(self):
 
-        # Forward Hook
         def forward_hook(module, input, output):
 
             self.activations = output
-
-        # Backward Hook
-        def backward_hook(module, grad_input, grad_output):
-
-            self.gradients = grad_output[0]
+            output.retain_grad()
 
         self.forward_handle = self.target_layer.register_forward_hook(
             forward_hook
-        )
-
-        self.backward_handle = self.target_layer.register_full_backward_hook(
-            backward_hook
         )
 
     # ==========================================================
@@ -54,10 +45,6 @@ class GradCAM:
         if self.forward_handle is not None:
 
             self.forward_handle.remove()
-
-        if self.backward_handle is not None:
-
-            self.backward_handle.remove()
 
     # ==========================================================
     # Forward Pass
@@ -99,7 +86,7 @@ class GradCAM:
         # Gradient Extraction
         # ======================================================
 
-        gradients = self.gradients.detach()
+        gradients = self.activations.grad.detach()
 
         activations = self.activations.detach()
 
