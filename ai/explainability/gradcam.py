@@ -72,16 +72,20 @@ class GradCAM:
             image,
             metadata
         )
-
+        print("Outputs", outputs)
         # Clear Previous Gradients
         self.model.zero_grad()
 
         # Target Score
         score = outputs[:, target_class]
-
+        print("Score:", score)
         # Backward Pass
         score.backward(torch.ones_like(score))
+        print("Activation shape :", self.activations.shape)
+        print("Gradient exists :", self.activations.grad is not None)
 
+        if self.activations.grad is not None:
+            print("Gradient sum :", self.activations.grad.abs().sum())
         # ======================================================
         # Gradient Extraction
         # ======================================================
@@ -264,7 +268,7 @@ if __name__ == "__main__":
     heatmap = gradcam.generate_heatmap(
         image,
         metadata,
-        target_class=13    # No Finding
+        target_class=10   # No Finding
     )
 
     overlay = gradcam.overlay_heatmap(
