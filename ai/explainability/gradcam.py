@@ -232,14 +232,13 @@ if __name__ == "__main__":
 
     CHECKPOINT = "ai/checkpoints/best_model.pth"
 
-    IMAGE_PATH = "sample.png"
+    IMAGE_PATH = r"D:\archive\images_001\images\00000003_000.png"
 
     OUTPUT_PATH = "gradcam_output.png"
 
     metadata = torch.tensor(
-        [[1.0, 0.0, 45.0]],
-        dtype=torch.float32
-    ).to(DEVICE)
+    [[0.0, 0.0, 0.1937046004842615]],
+    dtype=torch.float32).to(DEVICE)
 
     model = PulmoAIModel().to(DEVICE)
 
@@ -275,7 +274,7 @@ if __name__ == "__main__":
     heatmap = gradcam.generate_heatmap(
         image,
         metadata,
-        target_class=13      # Pneumonia
+        target_class=130     # No Finding
     )
 
     overlay = gradcam.overlay_heatmap(
