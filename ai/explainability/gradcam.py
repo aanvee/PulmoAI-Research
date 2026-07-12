@@ -226,13 +226,11 @@ if __name__ == "__main__":
 
     CHECKPOINT = "ai/checkpoints/best_model.pth"
 
-    IMAGE_PATH = r"D:\archive\images_001\images\00000003_000.png"
+    IMAGE_PATH = r"D:\archive\images_001\images\00000003_003.png"
 
     OUTPUT_PATH = "gradcam_output.png"
 
-    metadata = torch.tensor(
-    [[0.0, 0.0, 0.1937046004842615]],
-    dtype=torch.float32).to(DEVICE)
+    metadata = torch.tensor([[0.0, 0.0, 0.1815980629539951]],dtype=torch.float32).to(DEVICE)
 
     model = PulmoAIModel().to(DEVICE)
 

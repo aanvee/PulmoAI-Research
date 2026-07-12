@@ -159,12 +159,12 @@ def predict(
 
 if __name__ == "__main__":
 
-    IMAGE_PATH = r"D:\archive\images_001\images\00000003_000.png"
+    IMAGE_PATH = r"D:\archive\images_001\images\00000003_003.png"
 
     metadata = [
     0,                  # Female
     0,                  # AP View
-    0.1937046004842615  # Normalized age
+    0.1815980629539951      # patient_age
 ]
 
     results = predict(
