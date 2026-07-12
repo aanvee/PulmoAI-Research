@@ -27,6 +27,10 @@ class ImageEncoder(nn.Module):
             weights = None
 
         self.backbone = densenet121(weights=weights)
+        # Disable inplace ReLU for Grad-CAM compatibility
+        for module in self.backbone.modules():
+            if isinstance(module, nn.ReLU):
+                module.inplace = False
 
         # Remove classifier layer
         self.backbone.classifier = nn.Identity()
