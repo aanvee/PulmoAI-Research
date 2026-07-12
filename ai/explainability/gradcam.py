@@ -261,7 +261,7 @@ if __name__ == "__main__":
     heatmap = gradcam.generate_heatmap(
         image,
         metadata,
-        target_class=130     # No Finding
+        target_class=13    # No Finding
     )
 
     overlay = gradcam.overlay_heatmap(
