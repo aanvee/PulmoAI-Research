@@ -121,7 +121,10 @@ class GradCAM:
         heatmap /= (
             heatmap.max() + 1e-8
         )
-
+        print("Heatmap min :", heatmap.min().item())
+        print("Heatmap max :", heatmap.max().item())
+        print("Heatmap mean:", heatmap.mean().item())
+        
         return heatmap.squeeze().cpu().numpy()
     # ==========================================================
     # Overlay Heatmap on Original Image
@@ -251,7 +254,7 @@ if __name__ == "__main__":
     image = image.to(DEVICE)
 
     # Last DenseNet Convolution Layer
-    target_layer = model.image_encoder.backbone.features
+    target_layer = model.image_encoder.backbone.features.norm5
 
     gradcam = GradCAM(
         model,
