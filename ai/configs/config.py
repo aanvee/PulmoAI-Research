@@ -9,6 +9,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 # ==========================================================
 # Dataset Root
 # Change only this line on different machines
+DATASET_ROOT = Path(r"D:\archive")
 # ==========================================================
 
 DATASET_ROOT = Path(r"D:\archive")

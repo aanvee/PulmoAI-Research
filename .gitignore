@@ -6,3 +6,9 @@ coverage/
 *.log
 .env*
 !.env.example
+ai/configs/__pycache__/
+ai/data/preprocessing/__pycache__/
+ai/data/reports/
+ai/training/__pycache__/
+ai/models/__pycache__/
+ai/data/__pycache__/
