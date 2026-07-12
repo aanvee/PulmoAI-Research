@@ -76,6 +76,7 @@ running_loss = 0.0
 predictions = []
 
 targets = []
+metadata_list = []
 
 print("\nRunning Validation...\n")
 
@@ -101,9 +102,11 @@ with torch.no_grad():
 
         running_loss += loss.item()
 
-        predictions.append(outputs.detach().cpu())
+        predictions.append(torch.sigmoid(outputs).cpu())
 
-        targets.append(labels.detach().cpu())
+        targets.append(labels.cpu())
+
+        metadata_list.append(metadata.cpu())
 
 # ==========================================================
 # Metrics
@@ -117,9 +120,39 @@ os.makedirs(
     exist_ok=True
 )
 
-prediction_df = pd.DataFrame(torch.sigmoid(predictions).numpy())
+predictions = torch.cat(predictions)
+targets = torch.cat(targets)
+metadata = torch.cat(metadata_list)
 
-prediction_df.to_csv("ai/results/validation_predictions.csv",index=False)
+prediction_df = pd.DataFrame(
+    predictions.numpy(),
+    columns=[
+        "Atelectasis",
+        "Cardiomegaly",
+        "Consolidation",
+        "Edema",
+        "Effusion",
+        "Emphysema",
+        "Fibrosis",
+        "Hernia",
+        "Infiltration",
+        "Mass",
+        "No Finding",
+        "Nodule",
+        "Pleural_Thickening",
+        "Pneumonia",
+        "Pneumothorax"
+    ]
+)
+
+prediction_df["gender"] = metadata[:,0].numpy()
+prediction_df["view_position"] = metadata[:,1].numpy()
+prediction_df["age"] = metadata[:,2].numpy()
+
+prediction_df.to_csv(
+    "ai/results/validation_predictions.csv",
+    index=False
+)
 targets = torch.cat(targets)
 
 metrics = metric_calculator.calculate(
