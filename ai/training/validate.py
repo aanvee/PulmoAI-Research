@@ -150,7 +150,6 @@ prediction_df.to_csv(
     "ai/results/validation_predictions.csv",
     index=False
 )
-targets = torch.cat(targets)
 
 metrics = metric_calculator.calculate(
     predictions,
