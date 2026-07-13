@@ -82,14 +82,16 @@ class MetadataSHAP:
     # Create SHAP Explainer
     # ======================================================
 
-    def create_explainer(
-        self,
-        background_data
-    ):
+    def create_explainer(self, background_data):
+
+        background_data = np.asarray(
+            background_data,
+            dtype=np.float32
+        )
 
         self.explainer = shap.Explainer(
             self.predict,
-            background_data
+            shap.maskers.Independent(background_data)
         )
 
     # ======================================================
