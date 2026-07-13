@@ -155,5 +155,39 @@ class MetadataSHAP:
         print(
             f"SHAP Summary Plot Saved : {save_path}"
         )
-    
+# ==========================================================
+# Test SHAP
+# ==========================================================
+
+if __name__ == "__main__":
+
+    explainer = MetadataSHAP()
+
+    # Background samples (same distribution as training metadata)
+    background = [
+        [1, 0, 45],
+        [0, 1, 60],
+        [1, 1, 35],
+        [0, 0, 50]
+    ]
+
+    explainer.create_explainer(background)
+
+    # Test sample
+    sample = [
+        [0, 0, 38]
+    ]
+
+    shap_values = explainer.compute_shap_values(sample)
+
+    explainer.plot_feature_importance(
+        shap_values,
+        feature_names=[
+            "Gender",
+            "View Position",
+            "Age"
+        ]
+    )
+
+    print("SHAP Test Completed Successfully.")
         
