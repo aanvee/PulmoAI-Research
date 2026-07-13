@@ -112,9 +112,6 @@ with torch.no_grad():
 # Metrics
 # ==========================================================
 
-predictions = torch.cat(predictions)
-
-
 os.makedirs(
     "ai/results",
     exist_ok=True
