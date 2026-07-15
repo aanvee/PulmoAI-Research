@@ -1,6 +1,6 @@
 import os
 import tempfile
-
+import joblib
 import torch
 
 from ai.inference.predict import predict
@@ -26,11 +26,16 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 CHECKPOINT = PROJECT_ROOT / "ai" / "checkpoints" / "best_model.pth"
 
+SCALER_PATH = PROJECT_ROOT / "ai" / "data" / "reports" / "age_scaler.pkl"
 
+age_scaler = joblib.load(SCALER_PATH)
 # ==========================================================
 # Utility Functions
 # ==========================================================
-
+def normalize_age(age):
+    return float(
+        age_scaler.transform([[age]])[0][0]
+    )
 def encode_gender(gender):
 
     return 1 if gender == "M" else 0
@@ -58,7 +63,7 @@ def predict_service(
 
         encode_view_position(view_position),
 
-        age
+        normalize_age(age)
 
     ]
 
@@ -90,7 +95,7 @@ def gradcam_service(
 
             encode_view_position(view_position),
 
-            age
+            normalize_age(age)
 
         ]],
 
@@ -207,7 +212,7 @@ def shap_service(
 
         encode_view_position(view_position),
 
-        age
+        normalize_age(age)
 
     ]]
 
