@@ -120,11 +120,10 @@ class MetadataSHAP:
     # ======================================================
 
     def plot_feature_importance(
-        self,
-        shap_values,
-        feature_names,
-        save_path="ai/results/shap_summary.png"
-    ):
+    self,
+    shap_values,
+    feature_names,
+    save_path="ai/results/shap_summary.png"):
 
         import matplotlib.pyplot as plt
 
@@ -133,14 +132,11 @@ class MetadataSHAP:
             exist_ok=True
         )
 
-        plt.figure(
-            figsize=(8, 6)
-        )
+        plt.figure(figsize=(6,4))
 
-        shap.summary_plot(
-            shap_values.values,
-            features=shap_values.data,
-            feature_names=feature_names,
+        # Explain one disease (Hernia = index 7)
+        shap.plots.bar(
+            shap_values[:, :, 7],
             show=False
         )
 
@@ -154,9 +150,48 @@ class MetadataSHAP:
 
         plt.close()
 
-        print(
-            f"SHAP Summary Plot Saved : {save_path}"
-        )
+        print(f"SHAP Summary Plot Saved : {save_path}")
+        
+    # def plot_feature_importance(
+    #     self,
+    #     shap_values,
+    #     feature_names,
+    #     save_path="ai/results/shap_summary.png"
+    # ):
+
+    #     import matplotlib.pyplot as plt
+
+    #     os.makedirs(
+    #         os.path.dirname(save_path),
+    #         exist_ok=True
+    #     )
+
+    #     plt.figure(
+    #         figsize=(8, 6)
+    #     )
+
+    #     shap.summary_plot(
+    #         shap_values.values[:, :, 7],
+    #         features=shap_values.data,
+    #         feature_names=feature_names,
+    #         show=False
+    #     )
+
+    #     plt.tight_layout()
+
+    #     plt.savefig(
+    #         save_path,
+    #         dpi=300,
+    #         bbox_inches="tight"
+    #     )
+
+    #     plt.close()
+
+    #     print(
+    #         f"SHAP Summary Plot Saved : {save_path}"
+    #     )
+
+
 # ==========================================================
 # Test SHAP
 # ==========================================================
@@ -182,6 +217,11 @@ if __name__ == "__main__":
     
 
     shap_values = explainer.compute_shap_values(sample)
+
+    print(type(shap_values))
+    print("Values :", shap_values.values.shape)
+    print("Data :", shap_values.data.shape)
+    print("Base :", np.array(shap_values.base_values).shape)
 
     explainer.plot_feature_importance(
         shap_values,
