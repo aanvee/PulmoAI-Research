@@ -166,19 +166,20 @@ if __name__ == "__main__":
     explainer = MetadataSHAP()
 
     # Background samples (same distribution as training metadata)
-    background = [
-        [1, 0, 45],
-        [0, 1, 60],
-        [1, 1, 35],
-        [0, 0, 50]
-    ]
+    background = np.array([
+    [0, 0, 0.18],
+    [1, 0, 0.22],
+    [0, 1, 0.35],
+    [1, 1, 0.41]
+    ], dtype=np.float32)
+
+    sample = np.array([
+        [0, 0, 0.19]
+    ], dtype=np.float32)
 
     explainer.create_explainer(background)
 
-    # Test sample
-    sample = [
-        [0, 0, 38]
-    ]
+    
 
     shap_values = explainer.compute_shap_values(sample)
 
