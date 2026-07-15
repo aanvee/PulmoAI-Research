@@ -135,10 +135,13 @@ class MetadataSHAP:
         plt.figure(figsize=(6,4))
 
         # Explain one disease (Hernia = index 7)
-        shap.plots.bar(
-            shap_values[:, :, 7],
-            show=False
-        )
+        explanation = shap.Explanation(
+            values=shap_values.values[:, :, 7],
+            base_values=shap_values.base_values[:, 7],
+            data=shap_values.data,
+            feature_names=feature_names)
+
+        shap.plots.bar(explanation,show=False)
 
         plt.tight_layout()
 
