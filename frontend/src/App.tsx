@@ -10,12 +10,12 @@ import { AnalysisResult } from "./types";
 export default function App() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [loadingStep, setLoadingStep] = useState<number>(0);
 
   // Track currently active images for display
   const [activeXrayUrl, setActiveXrayUrl] = useState<string>("");
   const [activeHeatmapUrl, setActiveHeatmapUrl] = useState<string>("");
   const [activeShapUrl, setActiveShapUrl] = useState<string>("");
-
 
   const handleAnalyze = async (patientData: {
     age: string;
@@ -30,6 +30,7 @@ export default function App() {
     imageFile: File | null;
   }) => {
     setIsLoading(true);
+    setLoadingStep(0);
 
     try {
       const genderCode = patientData.gender === "Male" ? "M" : patientData.gender === "Female" ? "F" : patientData.gender.toUpperCase() === "M" ? "M" : "F";
@@ -37,6 +38,7 @@ export default function App() {
       // -------------------------
       // 1. Prediction Request
       // -------------------------
+      setLoadingStep(1);
 
       console.log({
         age: patientData.age,
@@ -46,7 +48,6 @@ export default function App() {
       });
 
       const formData = new FormData();
-
       formData.append("image", patientData.imageFile!);
       formData.append("age", patientData.age);
       formData.append("gender", genderCode);
@@ -54,10 +55,7 @@ export default function App() {
 
       const response = await fetch(
         "http://127.0.0.1:8000/api/predict/",
-        {
-          method: "POST",
-          body: formData,
-        }
+        { method: "POST", body: formData }
       );
 
       if (!response.ok) {
@@ -72,7 +70,6 @@ export default function App() {
         throw new Error("Prediction failed.");
       }
 
-      // Save prediction results and set original X-ray
       setAnalysisResult({
         predictions: data.predictions,
         top_predictions: data.top_predictions,
@@ -82,6 +79,7 @@ export default function App() {
       // -------------------------
       // 2. Grad-CAM Request
       // -------------------------
+      setLoadingStep(2);
       const targetClass = data.top_predictions[0].disease;
 
       const gradcamForm = new FormData();
@@ -93,10 +91,7 @@ export default function App() {
 
       const gradcamResponse = await fetch(
         "http://127.0.0.1:8000/api/gradcam/",
-        {
-          method: "POST",
-          body: gradcamForm,
-        }
+        { method: "POST", body: gradcamForm }
       );
 
       if (!gradcamResponse.ok) {
@@ -111,13 +106,12 @@ export default function App() {
         throw new Error("Grad-CAM generation failed.");
       }
 
-      setActiveHeatmapUrl(
-        `http://127.0.0.1:8000${gradcamData.gradcam_image}`
-      );
+      setActiveHeatmapUrl(`http://127.0.0.1:8000${gradcamData.gradcam_image}`);
 
       // -------------------------
       // 3. SHAP Request
       // -------------------------
+      setLoadingStep(3);
       const shapForm = new FormData();
       shapForm.append("age", patientData.age);
       shapForm.append("gender", genderCode);
@@ -125,10 +119,7 @@ export default function App() {
 
       const shapResponse = await fetch(
         "http://127.0.0.1:8000/api/shap/",
-        {
-          method: "POST",
-          body: shapForm,
-        }
+        { method: "POST", body: shapForm }
       );
 
       if (!shapResponse.ok) {
@@ -143,25 +134,21 @@ export default function App() {
         throw new Error("SHAP generation failed.");
       }
 
-      setActiveShapUrl(
-        `http://127.0.0.1:8000${shapData.shap_plot}`
-      );
+      setActiveShapUrl(`http://127.0.0.1:8000${shapData.shap_plot}`);
+
+      // -------------------------
+      // 4. Preparing Summary
+      // -------------------------
+      setLoadingStep(4);
 
       // Scroll to results
-      document
-        .getElementById("results-section")
-        ?.scrollIntoView({
-          behavior: "smooth",
-        });
+      document.getElementById("results-section")?.scrollIntoView({ behavior: "smooth" });
 
     } catch (error) {
-
       console.error(error);
-
     } finally {
-
       setIsLoading(false);
-
+      setLoadingStep(0);
     }
   };
 
@@ -185,6 +172,7 @@ export default function App() {
           heatmapUrl={activeHeatmapUrl}
           shapUrl={activeShapUrl}
           isLoading={isLoading}
+          loadingStep={loadingStep}
         />
 
         {/* Technical overview of models, Streams, and SOTA validation metrics */}
