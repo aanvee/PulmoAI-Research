@@ -1,6 +1,4 @@
 import React, { useRef, useState } from "react";
-import { SAMPLE_CASES } from "../data";
-import { PatientCase } from "../types";
 import { Upload, ChevronDown, Check, RefreshCw } from "lucide-react";
 
 interface DiagnosticInterfaceProps {
@@ -12,16 +10,14 @@ interface DiagnosticInterfaceProps {
     respRate: string;
     spO2: string;
     symptoms: string[];
-    caseName: string;
     customImageUploaded: boolean;
     customImageBase64: string;
-    selectedCase?: PatientCase;
+    imageFile: File | null;
   }) => void;
   isLoading: boolean;
 }
 
 export default function DiagnosticInterface({ onAnalyze, isLoading }: DiagnosticInterfaceProps) {
-  const [selectedCaseId, setSelectedCaseId] = useState<string>("pneumonia-case");
   const [age, setAge] = useState<string>("68");
   const [gender, setGender] = useState<string>("Male");
   const [temp, setTemp] = useState<string>("38.5");
@@ -32,25 +28,9 @@ export default function DiagnosticInterface({ onAnalyze, isLoading }: Diagnostic
 
   // Custom upload state
   const [customImage, setCustomImage] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [customImageName, setCustomImageName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Initialize with pneumonia-case data
-  const handleSelectCase = (id: string) => {
-    setSelectedCaseId(id);
-    const item = SAMPLE_CASES.find((c) => c.id === id);
-    if (item) {
-      setAge(item.age);
-      setGender(item.gender);
-      setTemp(item.temp);
-      setHeartRate(item.heartRate);
-      setRespRate(item.respRate);
-      setSpO2(item.spO2);
-      setSymptoms(item.symptoms);
-      setCustomImage(null); // Reset custom image when case is selected
-      setCustomImageName("");
-    }
-  };
 
   const handleToggleSymptom = (symptom: string) => {
     if (symptoms.includes(symptom)) {
@@ -62,15 +42,19 @@ export default function DiagnosticInterface({ onAnalyze, isLoading }: Diagnostic
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setCustomImageName(file.name);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setCustomImage(reader.result as string);
-        setSelectedCaseId("custom-upload");
-      };
-      reader.readAsDataURL(file);
-    }
+
+    if (!file) return;
+
+    setImageFile(file);
+    setCustomImageName(file.name);
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      setCustomImage(reader.result as string);
+    };
+
+    reader.readAsDataURL(file);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -79,21 +63,29 @@ export default function DiagnosticInterface({ onAnalyze, isLoading }: Diagnostic
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+
     const file = e.dataTransfer.files?.[0];
-    if (file) {
-      setCustomImageName(file.name);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setCustomImage(reader.result as string);
-        setSelectedCaseId("custom-upload");
-      };
-      reader.readAsDataURL(file);
-    }
+
+    if (!file) return;
+
+    setImageFile(file);
+    setCustomImageName(file.name);
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      setCustomImage(reader.result as string);
+    };
+
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const selectedCase = SAMPLE_CASES.find((c) => c.id === selectedCaseId);
+    if (!imageFile) {
+      alert("Please upload a Chest X-ray image.");
+      return;
+    }
     onAnalyze({
       age,
       gender,
@@ -102,10 +94,9 @@ export default function DiagnosticInterface({ onAnalyze, isLoading }: Diagnostic
       respRate,
       spO2,
       symptoms,
-      caseName: customImage ? "Custom Upload Case" : selectedCase?.name || "Custom Case",
       customImageUploaded: !!customImage,
       customImageBase64: customImage || "",
-      selectedCase: customImage ? undefined : selectedCase,
+      imageFile,
     });
   };
 
@@ -117,28 +108,6 @@ export default function DiagnosticInterface({ onAnalyze, isLoading }: Diagnostic
       <div className="flex items-center gap-3">
         <div className="h-8 w-2 bg-primary rounded-full"></div>
         <h2 className="font-heading text-2xl sm:text-3xl font-bold text-on-surface">AI Diagnostic Interface</h2>
-      </div>
-
-      {/* Patient cases pre-fill cards */}
-      <div className="space-y-3">
-        <p className="text-xs font-semibold text-secondary uppercase tracking-wider">Select Pre-defined Patient Case to prefill</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {SAMPLE_CASES.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => handleSelectCase(item.id)}
-              className={`p-3 text-left rounded-xl border transition-all cursor-pointer ${
-                selectedCaseId === item.id
-                  ? "bg-primary-fixed border-primary text-on-primary-fixed font-semibold shadow-sm"
-                  : "bg-surface-container-lowest border-outline-variant text-on-surface-variant hover:bg-surface-container-low"
-              }`}
-            >
-              <div className="text-sm font-semibold truncate">{item.name}</div>
-              <div className="text-xs text-secondary mt-1 truncate">{item.description}</div>
-            </button>
-          ))}
-        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -160,7 +129,7 @@ export default function DiagnosticInterface({ onAnalyze, isLoading }: Diagnostic
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileUpload}
-                accept="image/*"
+                accept=".png,.jpg,.jpeg,.dcm"
                 className="hidden"
               />
 
@@ -293,11 +262,10 @@ export default function DiagnosticInterface({ onAnalyze, isLoading }: Diagnostic
                         key={symptom}
                         type="button"
                         onClick={() => handleToggleSymptom(symptom)}
-                        className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-xs font-semibold transition-all cursor-pointer ${
-                          isChecked
-                            ? "bg-primary-container text-on-primary-container border-primary"
-                            : "bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-primary"
-                        }`}
+                        className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-xs font-semibold transition-all cursor-pointer ${isChecked
+                          ? "bg-primary-container text-on-primary-container border-primary"
+                          : "bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-primary"
+                          }`}
                       >
                         {isChecked && <Check className="w-3.5 h-3.5" />}
                         {symptom}
@@ -312,11 +280,10 @@ export default function DiagnosticInterface({ onAnalyze, isLoading }: Diagnostic
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full mt-6 text-on-primary h-14 rounded-2xl font-bold text-base shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer ${
-              isLoading 
-                ? "bg-primary/50 cursor-not-allowed" 
-                : "bg-primary hover:bg-primary-container hover:shadow-xl"
-            }`}
+            className={`w-full mt-6 text-on-primary h-14 rounded-2xl font-bold text-base shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer ${isLoading
+              ? "bg-primary/50 cursor-not-allowed"
+              : "bg-primary hover:bg-primary-container hover:shadow-xl"
+              }`}
           >
             {isLoading ? (
               <>

@@ -1,3 +1,21 @@
+export interface DiseasePrediction {
+  probability: number;
+  prediction: boolean;
+}
+
+export interface TopPrediction {
+  disease: string;
+  probability: number;
+}
+
+export interface AnalysisResult {
+  predictions: {
+    [disease: string]: DiseasePrediction;
+  };
+
+  top_predictions: TopPrediction[];
+}
+
 export interface PatientCase {
   id: string;
   name: string;
@@ -11,32 +29,11 @@ export interface PatientCase {
   symptoms: string[];
   xrayUrl: string;
   heatmapUrl: string;
-  pneumonia: number;
-  pleuralEffusion: number;
-  pneumothorax: number;
-  shap: {
-    xray: number;
-    spo2: number;
-    respRate: number;
-    fever: number;
-  };
-  analysis: string;
-  recommendations: string[];
-}
-
-export interface AnalysisResult {
-  probabilities: {
-    pneumonia: number;
-    pleuralEffusion: number;
-    pneumothorax: number;
-  };
-  analysis: string;
-  recommendations: string[];
-  shap: {
-    xray: number;
-    spo2: number;
-    respRate: number;
-    fever: number;
-  };
-  topPathology: string;
+  pneumonia?: number;
+  covid?: number;
+  atelectasis?: number;
+  normal?: number;
+  pleuralEffusion?: number;
+  pneumothorax?: number;
+  [key: string]: any;
 }

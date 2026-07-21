@@ -2,8 +2,8 @@ import os
 import tempfile
 import joblib
 import torch
-
-from ai.inference.predict import predict
+from django.conf import settings
+from ai.inference.predict import predict,DISEASES,get_model
 from ai.explainability.gradcam import GradCAM
 from ai.explainability.shap import MetadataSHAP
 from ai.models.multimodal_model import PulmoAIModel
@@ -38,12 +38,12 @@ def normalize_age(age):
     )
 def encode_gender(gender):
 
-    return 1 if gender == "M" else 0
+    return 1.0 if gender.upper() == "M" else 0.0
 
 
 def encode_view_position(view_position):
 
-    return 1 if view_position == "PA" else 0
+    return 1.0 if view_position.upper() == "PA" else 0.0
 
 
 # ==========================================================
@@ -58,13 +58,9 @@ def predict_service(
 ):
 
     metadata = [
-
         encode_gender(gender),
-
         encode_view_position(view_position),
-
         normalize_age(age)
-
     ]
 
     results = predict(
@@ -72,7 +68,23 @@ def predict_service(
         metadata
     )
 
-    return results
+    # Sort diseases by probability (highest first)
+    top_predictions = sorted(
+        [
+            {
+                "disease": disease,
+                "probability": round(info["probability"]*100,2)
+            }
+            for disease, info in results.items()
+        ],
+        key=lambda x: x["probability"],
+        reverse=True
+    )[:3]
+
+    return {
+        "predictions": results,
+        "top_predictions": top_predictions
+    }
 
 
 # ==========================================================
@@ -86,6 +98,13 @@ def gradcam_service(
     view_position,
     target_class
 ):
+
+    if target_class not in DISEASES:
+        raise ValueError(
+            f"Invalid disease name: {target_class}"
+        )
+
+    target_index = DISEASES.index(target_class)
 
     metadata = torch.tensor(
 
@@ -103,17 +122,7 @@ def gradcam_service(
 
     ).to(DEVICE)
 
-    model = PulmoAIModel().to(DEVICE)
-
-    checkpoint = torch.load(str(CHECKPOINT),map_location=DEVICE)
-
-    model.load_state_dict(
-
-        checkpoint["model_state_dict"]
-
-    )
-
-    model.eval()
+    model = get_model()
 
     image = Image.open(
 
@@ -136,20 +145,25 @@ def gradcam_service(
         target_layer
 
     )
-
     heatmap = gradcam.generate_heatmap(
 
         image_tensor,
 
         metadata,
 
-        target_class
+        target_index
 
     )
+    gradcam_dir = os.path.join(
+        settings.MEDIA_ROOT,
+        "gradcam"
+    )
+
+    os.makedirs(gradcam_dir,exist_ok=True)
 
     output_path = os.path.join(
 
-        tempfile.gettempdir(),
+        gradcam_dir,
 
         "gradcam_output.png"
 
@@ -173,7 +187,7 @@ def gradcam_service(
 
     gradcam.remove_hooks()
 
-    return output_path
+    return "/media/gradcam/gradcam_output.png"
 
 
 # ==========================================================
@@ -222,9 +236,16 @@ def shap_service(
 
     )
 
+    shap_dir = os.path.join(
+        settings.MEDIA_ROOT,
+        "shap"
+    )
+
+    os.makedirs(shap_dir, exist_ok=True)
+
     output_path = os.path.join(
 
-        tempfile.gettempdir(),
+        shap_dir,
 
         "shap_summary.png"
 
@@ -248,4 +269,4 @@ def shap_service(
 
     )
 
-    return output_path
+    return "/media/shap/shap_summary.png"

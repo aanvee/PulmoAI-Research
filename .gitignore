@@ -12,3 +12,8 @@ ai/data/reports/
 ai/training/__pycache__/
 ai/models/__pycache__/
 ai/data/__pycache__/
+ai/inference/__pycache__/
+ai/explainability/__pycache__/
+backend/backend/__pycache__/
+backend/predictor/__pycache__/
+backend/predictor/migrations/__pycache__/

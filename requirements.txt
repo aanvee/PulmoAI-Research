@@ -9,4 +9,6 @@ joblib
 tqdm
 torch
 torchvision
+Django
+djangorestframework
 

@@ -73,23 +73,15 @@ def predict(request):
 
             destination.write(chunk)
 
-    predictions = predict_service(
-
-        image_path,
-
-        age,
-
-        gender,
-
-        view_position
-
-    )
+    result = predict_service(image_path,age,gender,view_position )
 
     return JsonResponse({
 
         "success": True,
 
-        "predictions": predictions
+        "predictions": result["predictions"],
+
+        "top_predictions": result["top_predictions"]
 
     })
 

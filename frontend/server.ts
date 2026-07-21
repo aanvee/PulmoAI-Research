@@ -82,7 +82,7 @@ app.post("/api/analyze", async (req, res) => {
     if (t > 38.0) {
       pneumoniaProb += 20;
     }
-    
+
     const hr = parseFloat(heartRate) || 72;
     if (hr > 100) {
       pneumoniaProb += 10;

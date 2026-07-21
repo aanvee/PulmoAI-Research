@@ -58,10 +58,7 @@ class GradCAMSerializer(serializers.Serializer):
         ]
     )
 
-    target_class = serializers.IntegerField(
-        min_value=0,
-        max_value=14
-    )
+    target_class = serializers.CharField()
 
 
 # ==========================================================

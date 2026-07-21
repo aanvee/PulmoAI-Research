@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import shap
 import torch
@@ -15,7 +16,9 @@ DEVICE = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
 )
 
-CHECKPOINT = "ai/checkpoints/best_model.pth"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+CHECKPOINT = PROJECT_ROOT / "ai" / "checkpoints" / "best_model.pth"
 
 
 # ==========================================================
@@ -27,13 +30,13 @@ class MetadataSHAP:
     def __init__(self):
 
         self.model = PulmoAIModel().to(DEVICE)
-        if not os.path.exists(CHECKPOINT):
+        if not CHECKPOINT.exists():
             raise FileNotFoundError(
                 f"Checkpoint not found: {CHECKPOINT}"
             )
             
         checkpoint = torch.load(
-            CHECKPOINT,
+            str(CHECKPOINT),
             map_location=DEVICE
         )
 

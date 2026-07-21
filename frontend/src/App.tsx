@@ -1,40 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import DiagnosticInterface from "./components/DiagnosticInterface";
 import AnalysisResults from "./components/AnalysisResults";
 import ResearchMethodology from "./components/ResearchMethodology";
 import Footer from "./components/Footer";
-import { SAMPLE_CASES } from "./data";
-import { AnalysisResult, PatientCase } from "./types";
+import { AnalysisResult } from "./types";
 
 export default function App() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  
+
   // Track currently active images for display
   const [activeXrayUrl, setActiveXrayUrl] = useState<string>("");
   const [activeHeatmapUrl, setActiveHeatmapUrl] = useState<string>("");
+  const [activeShapUrl, setActiveShapUrl] = useState<string>("");
 
-  // Preload Case 1 (Pneumonia Suspect) as the active view on launch
-  useEffect(() => {
-    const defaultCase = SAMPLE_CASES[0];
-    if (defaultCase) {
-      setActiveXrayUrl(defaultCase.xrayUrl);
-      setActiveHeatmapUrl(defaultCase.heatmapUrl);
-      setAnalysisResult({
-        probabilities: {
-          pneumonia: defaultCase.pneumonia,
-          pleuralEffusion: defaultCase.pleuralEffusion,
-          pneumothorax: defaultCase.pneumothorax,
-        },
-        analysis: defaultCase.analysis,
-        recommendations: defaultCase.recommendations,
-        shap: defaultCase.shap,
-        topPathology: "Pneumonia",
-      });
-    }
-  }, []);
 
   const handleAnalyze = async (patientData: {
     age: string;
@@ -44,91 +25,143 @@ export default function App() {
     respRate: string;
     spO2: string;
     symptoms: string[];
-    caseName: string;
     customImageUploaded: boolean;
     customImageBase64: string;
-    selectedCase?: PatientCase;
+    imageFile: File | null;
   }) => {
     setIsLoading(true);
 
     try {
-      // If a pre-defined sample case is active and no custom image uploaded, we can instantly
-      // load its state (for sub-second response) or simulate a network/API fetch
-      if (patientData.selectedCase && !patientData.customImageUploaded) {
-        const selected = patientData.selectedCase;
-        // Introduce a realistic sub-second processing lag to give professional weight to the analysis
-        await new Promise((resolve) => setTimeout(resolve, 800));
-        
-        setActiveXrayUrl(selected.xrayUrl);
-        setActiveHeatmapUrl(selected.heatmapUrl);
-        setAnalysisResult({
-          probabilities: {
-            pneumonia: selected.pneumonia,
-            pleuralEffusion: selected.pleuralEffusion,
-            pneumothorax: selected.pneumothorax,
-          },
-          analysis: selected.analysis,
-          recommendations: selected.recommendations,
-          shap: selected.shap,
-          topPathology: selected.pneumonia > selected.pleuralEffusion && selected.pneumonia > selected.pneumothorax 
-            ? "Pneumonia" 
-            : selected.pleuralEffusion > selected.pneumothorax 
-            ? "Pleural Effusion" 
-            : "Pneumothorax",
-        });
+      const genderCode = patientData.gender === "Male" ? "M" : patientData.gender === "Female" ? "F" : patientData.gender.toUpperCase() === "M" ? "M" : "F";
 
-        // Smooth scroll to results
-        setTimeout(() => {
-          document.getElementById("results-section")?.scrollIntoView({ behavior: "smooth" });
-        }, 100);
-      } else {
-        // Perform real full-stack API prediction request to server-side Gemini
-        const response = await fetch("/api/analyze", {
+      // -------------------------
+      // 1. Prediction Request
+      // -------------------------
+
+      console.log({
+        age: patientData.age,
+        gender: genderCode,
+        view_position: "PA",
+        image: patientData.imageFile
+      });
+
+      const formData = new FormData();
+
+      formData.append("image", patientData.imageFile!);
+      formData.append("age", patientData.age);
+      formData.append("gender", genderCode);
+      formData.append("view_position", "PA");
+
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/predict/",
+        {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(patientData),
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Prediction API Error:", errorData);
+        throw new Error("Prediction API request failed.");
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error("Prediction failed.");
+      }
+
+      // Save prediction results and set original X-ray
+      setAnalysisResult({
+        predictions: data.predictions,
+        top_predictions: data.top_predictions,
+      });
+      setActiveXrayUrl(patientData.customImageBase64);
+
+      // -------------------------
+      // 2. Grad-CAM Request
+      // -------------------------
+      const targetClass = data.top_predictions[0].disease;
+
+      const gradcamForm = new FormData();
+      gradcamForm.append("image", patientData.imageFile!);
+      gradcamForm.append("age", patientData.age);
+      gradcamForm.append("gender", genderCode);
+      gradcamForm.append("view_position", "PA");
+      gradcamForm.append("target_class", targetClass);
+
+      const gradcamResponse = await fetch(
+        "http://127.0.0.1:8000/api/gradcam/",
+        {
+          method: "POST",
+          body: gradcamForm,
+        }
+      );
+
+      if (!gradcamResponse.ok) {
+        const errorData = await gradcamResponse.json();
+        console.error("Grad-CAM API Error:", errorData);
+        throw new Error("Grad-CAM request failed.");
+      }
+
+      const gradcamData = await gradcamResponse.json();
+
+      if (!gradcamData.success) {
+        throw new Error("Grad-CAM generation failed.");
+      }
+
+      setActiveHeatmapUrl(
+        `http://127.0.0.1:8000${gradcamData.gradcam_image}`
+      );
+
+      // -------------------------
+      // 3. SHAP Request
+      // -------------------------
+      const shapForm = new FormData();
+      shapForm.append("age", patientData.age);
+      shapForm.append("gender", genderCode);
+      shapForm.append("view_position", "PA");
+
+      const shapResponse = await fetch(
+        "http://127.0.0.1:8000/api/shap/",
+        {
+          method: "POST",
+          body: shapForm,
+        }
+      );
+
+      if (!shapResponse.ok) {
+        const errorData = await shapResponse.json();
+        console.error("SHAP API Error:", errorData);
+        throw new Error("SHAP request failed.");
+      }
+
+      const shapData = await shapResponse.json();
+
+      if (!shapData.success) {
+        throw new Error("SHAP generation failed.");
+      }
+
+      setActiveShapUrl(
+        `http://127.0.0.1:8000${shapData.shap_plot}`
+      );
+
+      // Scroll to results
+      document
+        .getElementById("results-section")
+        ?.scrollIntoView({
+          behavior: "smooth",
         });
 
-        if (!response.ok) {
-          throw new Error("API analysis request failed");
-        }
+    } catch (error) {
 
-        const data = await response.json();
-        
-        if (data.success) {
-          // If custom image uploaded, use it. Otherwise, fallback to base xrays
-          if (patientData.customImageUploaded && patientData.customImageBase64) {
-            setActiveXrayUrl(patientData.customImageBase64);
-            setActiveHeatmapUrl(patientData.customImageBase64); // No visual heatmap available for custom unless generated
-          } else {
-            setActiveXrayUrl(SAMPLE_CASES[0].xrayUrl);
-            setActiveHeatmapUrl(SAMPLE_CASES[0].heatmapUrl);
-          }
+      console.error(error);
 
-          setAnalysisResult({
-            probabilities: {
-              pneumonia: data.probabilities.pneumonia,
-              pleuralEffusion: data.probabilities.pleuralEffusion,
-              pneumothorax: data.probabilities.pneumothorax,
-            },
-            analysis: data.analysis,
-            recommendations: data.recommendations,
-            shap: data.shap,
-            topPathology: data.topPathology,
-          });
-
-          // Smooth scroll to results
-          setTimeout(() => {
-            document.getElementById("results-section")?.scrollIntoView({ behavior: "smooth" });
-          }, 100);
-        }
-      }
-    } catch (err) {
-      console.error("Clinical analyzer error:", err);
     } finally {
+
       setIsLoading(false);
+
     }
   };
 
@@ -146,11 +179,12 @@ export default function App() {
         <DiagnosticInterface onAnalyze={handleAnalyze} isLoading={isLoading} />
 
         {/* Dynamic Pathology calculations, Grad-CAM Saliency Maps and Gemini AI interpretation */}
-        <AnalysisResults 
-          result={analysisResult} 
-          xrayUrl={activeXrayUrl} 
-          heatmapUrl={activeHeatmapUrl} 
-          isLoading={isLoading} 
+        <AnalysisResults
+          result={analysisResult}
+          xrayUrl={activeXrayUrl}
+          heatmapUrl={activeHeatmapUrl}
+          shapUrl={activeShapUrl}
+          isLoading={isLoading}
         />
 
         {/* Technical overview of models, Streams, and SOTA validation metrics */}
